@@ -1,0 +1,31 @@
+
+# To build
+# In ldap_sync dir 
+cd ldap_sync
+
+docker image build --file Dockerfile --tag ldap_sync:1.0.0 .
+
+# temporary push su DOCKERHUB user: cellaid (repo priv)
+docker tag ldap_sync:1.0.0 cellaid/ldap_sync:1.0.0
+docker push cellaid/ldap_sync:1.0.0
+
+
+# to run the container 
+# note: ./config.yaml is the LDAP_sync configuration file
+
+# Run as test
+docker run \
+    --name ldap-sync\
+    -v "$PWD"/config.yaml:/etc/determined/ldap_sync_config.yaml \
+    --rm \
+    --network host \
+    ldap_sync:1.0.0 
+
+# Generic run (maybe a restart  policy )
+docker run \
+    --name ldap-sync\
+    -v "$PWD"/config.yaml:/etc/determined/ldap_sync_config.yaml \
+    -tid \
+    --restart unless-stopped \
+    --network host \
+    ldap_sync:1.0.0 

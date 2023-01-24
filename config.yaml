@@ -1,0 +1,63 @@
+log:
+  level: debug
+
+ldap_sync:
+  
+  sync_freq: 60  # seconds - if 0 runs once and exit
+
+  auth:
+    url: "ldap://det-dcellai-win-ldap-srv.c.determined-ai.internal"
+    tls: false
+    user: "CN=Administrator,CN=Users,DC=ds,DC=det-dcellai-win-ldap-srv,DC=c,DC=determined-ai,DC=internal"
+    password: "pass-WORD"
+    #password: !ENV 'LDAP_SYNC_LDAP_PASSWORD' # '!ENV' is parameter retrieved from an environment variable (it can be used everywhere)
+  
+  users:
+    dn: "CN=Users,DC=ds,DC=det-dcellai-win-ldap-srv,DC=c,DC=determined-ai,DC=internal"
+    attr: 
+      - objectGUID
+      - cn
+      - sn
+      - givenName
+      - mail
+      - userPrincipalName
+      - displayName
+      - memberof
+      - whenChanged
+      - userAccountControl
+    filter: "(&(objectCategory=person)(objectClass=user)(name=*)(memberOf=CN=DetGroup,CN=Users,DC=ds,DC=det-dcellai-win-ldap-srv,DC=c,DC=determined-ai,DC=internal))"
+
+  ldap_plugin: ms_active_directory      # (mandatory) LDAP vendor-specific entries managment and mapping
+
+  user_plugin: user_plugin_template     # (optional) User operations exec before/after user is sent to SCIM or null
+  
+
+scim_sync:
+  url: "http://localhost:8080/scim/v2"
+
+  auth:
+    type: basic
+    username: "scim-user"
+    password: "9rv9382mf9rcm2c940ic034"
+    #password: !ENV 'LDAP_SYNC_SCIM_PASSWORD' # '!ENV' is parameter retrieved from an environment variable (it can be used everywhere)
+
+  attr_mapping:
+    #
+    # SCIM fields requested by the MLDE SCIM API and related LDAP field mapping. 
+    # The fileds adaptation and mapping is executed by the ldap_plugin.
+    # SCIM fields can contain const (str|int|float|bool) or LDAP fields ${...}
+    #
+    # NOTE: SCIM field list can be extended as preferred, even if not managed (mandatory fields must be present).
+    #
+    id: null                              # (mandatory field) - r/o filled by the SCIM API
+    userName: ${userPrincipalName}        # (mandatory field) - it could be also the email
+    externalId: ${objectGUID}             # (mandatory field) - it could be also the UUID
+    emails.work.value: ${mail}            # (mandatory field) - emails (value: email addr, type: 'work', primary: T)
+    active: ${userAccountControl}         # (mandatory field) - user activation status
+    name.givenName: ${givenName}          # (mandatory field) - first name
+    name.familyName: ${sn}                # (mandatory field) - last name
+    displayName: ${cn}
+    preferredLanguage: en_US            
+    whenChanged: ${whenChanged}
+    memberOf: ${memberOf}                 # it could be a single group DN
+                                          # or as in MS A/D a list of group DN

@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>MLDE SCIM Implementation notes.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+	color: #8e908c;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+	color: #c82829;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+	color: #f5871f;
+}
+
+/* Tomorrow Yellow */
+.hljs-attribute {
+	color: #eab700;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+	color: #718c00;
+}
+
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+	color: #4271ae;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+	color: #8959a8;
+}
+
+.hljs {
+	display: block;
+	overflow-x: auto;
+	color: #4d4d4c;
+	padding: 0.5em;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<h3 id="internal-scim-user-structure---and-jsondb-fields-name-ref-json-used-in-rest-api">Internal SCIM User structure - and JSON/DB fields name ref. (json used in REST API)</h3>
+<h5 id="from-determined-eemasterpkgmodelscimusergo">from: <code>determined-ee/master/pkg/model/scim_user.go</code></h5>
+<h5 id="db-implementation-ref-determined-eemasterinternaldbpostgresscimgo">db implementation ref: <code>determined-ee/master/internal/db/postgres_scim.go</code></h5>
+<pre class="hljs"><code><div>    ID         UUID       `db:&quot;id&quot; json:&quot;id&quot;`                           &lt;&lt;- mandatory
+    Username   string     `db:&quot;username&quot; json:&quot;userName&quot;`               &lt;&lt;- mandatory 
+    ExternalID string     `db:&quot;external_id&quot; json:&quot;externalId&quot;`
+    Name       SCIMName   `db:&quot;name&quot; json:&quot;name&quot;`
+    Emails     SCIMEmails `db:&quot;emails&quot; json:&quot;emails&quot;`
+    Active     bool       `db:&quot;active&quot; json:&quot;active&quot;`
+
+    PasswordHash null.String `db:&quot;password_hash&quot; json:&quot;password_hash,omitempty&quot;`
+
+    Password string          `json:&quot;password,omitempty&quot;`
+    Schemas  SCIMUserSchemas `json:&quot;schemas&quot;`                           -&gt; const string
+    Meta     *SCIMUserMeta   `json:&quot;meta&quot;`                  
+
+    UserID        UserID                 `db:&quot;user_id&quot; json:&quot;-&quot;`
+    RawAttributes map[string]interface{} `db:&quot;raw_attributes&quot; json:&quot;-&quot;`
+</div></code></pre>
+<p>Name field structure</p>
+<pre class="hljs"><code><div>    GivenName  string `json:&quot;givenName&quot;`
+    FamilyName string `json:&quot;familyName&quot;`
+</div></code></pre>
+<p>Emails field structure</p>
+<pre class="hljs"><code><div>    Type    string `json:&quot;type&quot;`
+    SValue  string `json:&quot;value&quot;`
+    Primary bool   `json:&quot;primary&quot;`
+</div></code></pre>
+<p>Meta field structure</p>
+<pre class="hljs"><code><div>    ResourceType SCIMUserResourceType `json:&quot;resourceType&quot;`
+    Location     string               `json:&quot;location&quot;`
+</div></code></pre>
+<p>Password hash generation (golang)</p>
+<pre class="hljs"><code><div>    from determined-ee/master/pkg/model/scim_user.go 
+
+    const clientSidePasswordSalt = &quot;GubPEmmotfiK9TMD6Zdw&quot; // #nosec G101
+
+    // replicateClientSideSaltAndHash replicates the password salt and hash done on the client side.
+    // We need this because we hash passwords on the client side, but when SCIM posts a user with
+    // a password to password sync, it doesn't so when we try to log in later, we get a weird,
+    // unrecognizable sha512 hash from the frontend.
+    func replicateClientSideSaltAndHash(password string) string {
+        sum := sha512.Sum512([]byte(clientSidePasswordSalt + password))
+        return fmt.Sprintf(&quot;%x&quot;, sum)
+    }
+</div></code></pre>
+<p>SCIM User list structure</p>
+<pre class="hljs"><code><div>    TotalResults int         `json:&quot;totalResults&quot;`
+    StartIndex   int         `json:&quot;startIndex&quot;`
+    Resources    []*SCIMUser `json:&quot;Resources&quot;`
+
+    ItemsPerPage int             `json:&quot;itemsPerPage&quot;`
+    Schemas      SCIMListSchemas `json:&quot;schemas&quot;`        -&gt; const string
+</div></code></pre>
+<hr>
+<h3 id="internal-scim-group-structure---and-jsondb-fields-name-ref-json-for-rest-api">Internal SCIM Group structure - and JSON/DB fields name ref. (json for REST API)</h3>
+<h5 id="from-determined-eemasterpkgmodelscimgroupgo">from: <code>determined-ee/master/pkg/model/scim_group.go</code></h5>
+<pre class="hljs"><code><div>    ID          UUID        `json:&quot;id&quot;`
+    DisplayName string      `json:&quot;displayName&quot;`
+    Members     []*SCIMUser `json:&quot;members&quot;`
+
+    Schemas SCIMGroupSchemas `json:&quot;schemas&quot;`
+    Meta    *SCIMGroupMeta   `json:&quot;meta&quot;`
+</div></code></pre>
+<p>SCIM Group list structure</p>
+<pre class="hljs"><code><div>    TotalResults int          `json:&quot;totalResults&quot;`
+    StartIndex   int          `json:&quot;startIndex&quot;`
+    Resources    []*SCIMGroup `json:&quot;Resources&quot;`
+
+    ItemsPerPage int             `json:&quot;itemsPerPage&quot;`
+    Schemas      SCIMListSchemas `json:&quot;schemas&quot;`
+</div></code></pre>
+<hr>
+<h3 id="mlde-scim-apis-implementation">MLDE SCIM APIs Implementation</h3>
+<h3 id="from-determined-eemasterinternalpluginscimservicego">from: determined-ee/master/internal/plugin/scim/service.go</h3>
+<pre class="hljs"><code><div>&lt;MLDE SCIM EP&gt;/Users           GET    GetUsers    (gets the list of users)
+&lt;MLDE SCIM EP&gt;/Users/:user_id  GET    GetUser     (reads user data)
+&lt;MLDE SCIM EP&gt;/Users           POST   PostUser    (creates a new user)
+&lt;MLDE SCIM EP&gt;/Users/:user_id  PUT    PutUser     (updates all fiels)
+&lt;MLDE SCIM EP&gt;/Users/:user_id  PATCH  PatchUser   (updates specifc fields)
+
+    PATCH op available: replace
+    
+    NOTE: updating sub-path is not supported
+
+    Fields that can be updated:
+        - active
+        - emails
+        - name
+    
+        Note: Set a user as active=false -&gt; delete the current 
+              active sessions for that user
+    
+    Example
+        # From: determined-ee/e2e_tests/tests/test_scim.py
+        # active &lt;- false
+        patch_req = {
+            &quot;schemas&quot;: [&quot;urn:ietf:params:scim:api:messages:2.0:PatchOp&quot;],
+            &quot;operations&quot;: [{&quot;op&quot;: &quot;replace&quot;, &quot;value&quot;: {&quot;active&quot;: False}}]
+        }
+        
+        r = requests.patch(
+            &quot;&lt;MLDE SCIM EP&gt;/Users/{user_id}&quot;),
+            auth=(&lt;SCIM_USERNAME&gt;, &lt;SCIM_PASSWORD&gt;),
+            json=patch_req
+        )
+
+&lt;MLDE SCIM EP&gt;/Groups            GET      GetGroups    (returns an empty block)
+</div></code></pre>
+<p>Authentication mechanism</p>
+<ul>
+<li>basic</li>
+<li>oauth</li>
+</ul>
+<p>Errors</p>
+<pre class="hljs"><code><div>* Not Found Error      404    wrong entity id or path    API: GetUserPutUser, PatchUser 
+* Bad Request Error    400    error in parameter         API: GetUsers, PostUser, PutUser, PatchUser
+* Conflict Error       409    entity already present     API: PostUser, PutUser
+</div></code></pre>
+
+</body>
+</html>
