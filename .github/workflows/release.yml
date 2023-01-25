@@ -25,6 +25,7 @@ jobs:
     steps:
       - name: work around github's inability to add a lowercase() function
         run: |
+          # FYI: the ${name,,} structure converts all of $name to lowercase
           echo "LC_IMAGE_NAME=${IMAGE_NAME,,}" >> "$GITHUB_ENV"
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -117,7 +118,7 @@ jobs:
     steps:
       - name: work around github's inability to add a lowercase() function
         run: |
-          DOCKERHUB_IMAGE_NAME=${IMAGE_NAME/*\//${DOCKERHUB_USERNAME,,}/}
+          DOCKERHUB_IMAGE_NAME=${IMAGE_NAME/*\//${DOCKERHUB_ACCOUNT_NAME,,}/}
           {
             printf 'LC_IMAGE_NAME=%s\n' "${IMAGE_NAME,,}"
             printf 'DOCKERHUB_LC_IMAGE_NAME=%s\n' "${DOCKERHUB_IMAGE_NAME,,}"
