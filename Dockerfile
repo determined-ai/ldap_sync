@@ -14,7 +14,7 @@ RUN apt-get -y update \
       libssl-dev \
  && apt-get -y clean
 
-# Virtual envirnment creation
+# Virtual environment creation
 ENV VIRTUAL_ENV=/opt/venv
 RUN python3 -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
