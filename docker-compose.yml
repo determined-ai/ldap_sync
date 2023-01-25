@@ -1,0 +1,7 @@
+---
+version: "3.0"
+services:
+  ldap_sync:
+    build: .
+    volumes:
+      - ./config.yaml:/etc/determined/ldap_sync_config.yaml

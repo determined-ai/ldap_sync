@@ -1,0 +1,36 @@
+---
+name: Auto Actions
+
+on: # yamllint disable-line rule:truthy
+  pull_request_target:
+    types: [labeled, unlabeled, synchronize, review_requested, opened, reopened]
+
+permissions:
+  pull-requests: write
+  contents: write
+
+jobs:
+  auto-approve-github-actions:
+    runs-on: ubuntu-latest
+    if: >-
+      github.actor == 'dependabot[bot]'
+      ||
+      github.actor == 'dependabot-preview[bot]'
+    steps:
+    - uses: hmarr/auto-approve-action@v2.2.1
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  auto-merge-github-actions:
+    runs-on: ubuntu-latest
+    if: >-
+      github.actor == 'dependabot[bot]'
+      ||
+      github.actor == 'dependabot-preview[bot]'
+    steps:
+    - name: Enable auto-merge
+      run: gh pr merge --auto --squash "$PR_URL"
+      env:
+        PR_URL: ${{github.event.pull_request.html_url}}
+        #GITHUB_TOKEN: ${{ secrets.ACTION_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.ACTION_TOKEN }}
