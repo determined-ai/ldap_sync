@@ -25,13 +25,13 @@ jobs:
     steps:
       - name: work around github's inability to add a lowercase() function
         run: |
-          echo "LC_IMAGE_NAME=${IMAGE_NAME,,}" >> $GITHUB_ENV 
+          echo "LC_IMAGE_NAME=${IMAGE_NAME,,}" >> "$GITHUB_ENV"
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
       #- name: Log in to GitHub Container Registry
-      #  uses: docker/login-action@v2 
+      #  uses: docker/login-action@v2.1.0
       #  with:
       #    registry: ghcr.io
       #    username: ${{ github.repository_owner }}
@@ -63,7 +63,7 @@ jobs:
     steps:
       - name: work around github's inability to add a lowercase() function
         run: |
-          echo "LC_IMAGE_NAME=${IMAGE_NAME,,}" >> $GITHUB_ENV 
+          echo "LC_IMAGE_NAME=${IMAGE_NAME,,}" >> "$GITHUB_ENV"
       - name: Download artifact
         uses: actions/download-artifact@v3
         with:
@@ -88,7 +88,7 @@ jobs:
     steps:
       - name: work around github's inability to add a lowercase() function
         run: |
-          echo "LC_IMAGE_NAME=${IMAGE_NAME,,}" >> $GITHUB_ENV 
+          echo "LC_IMAGE_NAME=${IMAGE_NAME,,}" >> "$GITHUB_ENV"
       - name: Download artifact
         uses: actions/download-artifact@v3
         with:
@@ -117,8 +117,11 @@ jobs:
     steps:
       - name: work around github's inability to add a lowercase() function
         run: |
-          echo "LC_IMAGE_NAME=${IMAGE_NAME,,}" >> $GITHUB_ENV 
-          echo "DOCKERHUB_LC_IMAGE_NAME=${LC_IMAGE_NAME/*\//${DOCKERHUB_USERNAME,,}/}" >> $GITHUB_ENV 
+          DOCKERHUB_IMAGE_NAME=${IMAGE_NAME/*\//${DOCKERHUB_USERNAME,,}/}
+          {
+            printf 'LC_IMAGE_NAME=%s\n' "${IMAGE_NAME,,}"
+            printf 'DOCKERHUB_LC_IMAGE_NAME=%s\n' "${DOCKERHUB_IMAGE_NAME,,}"
+          } >> "$GITHUB_ENV"
 
       # create the release
       - name: Checkout
@@ -170,13 +173,13 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
       - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v2 
+        uses: docker/login-action@v2.1.0
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Login to DockerHub
-        uses: docker/login-action@v1.14.1
+        uses: docker/login-action@v2.1.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PUBLISH_TOKEN }}
