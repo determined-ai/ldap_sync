@@ -1,8 +1,9 @@
 # syntax = docker/dockerfile:1.3
 # Use the official Python 3 image.
 # https://hub.docker.com/_/python
-FROM python:3.8.16-slim
- 
+#FROM python:3.8.16-slim
+FROM python:3.11.1-slim
+
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get -y update \
  && apt-get -y install \
@@ -13,6 +14,12 @@ RUN apt-get -y update \
       libssl-dev \
  && apt-get -y clean
 
+# Virtual envirnment creation
+ENV VIRTUAL_ENV=/opt/venv
+RUN python3 -m venv $VIRTUAL_ENV
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+# ---
+
 COPY ldap_sync/ /ldap_sync/
 WORKDIR /ldap_sync
 
@@ -20,6 +27,7 @@ ARG CONFIGDIR=/etc/determined
 RUN mkdir -p $CONFIGDIR \
  && chmod 0755 $CONFIGDIR \
  && chmod 0444 requirements.txt 
+
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Run the web service on container startup.

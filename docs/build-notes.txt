@@ -19,13 +19,13 @@ docker run \
     -v "$PWD"/config.yaml:/etc/determined/ldap_sync_config.yaml \
     --rm \
     --network host \
-    ldap_sync:1.0.0 
+    ldap_sync:0.2.0 
 
-# Generic run (maybe a restart  policy )
+# Generic run (maybe a restart policy)
 docker run \
     --name ldap-sync\
     -v "$PWD"/config.yaml:/etc/determined/ldap_sync_config.yaml \
     -tid \
     --restart unless-stopped \
     --network host \
-    ldap_sync:1.0.0 
+    ldap_sync:0.2.0 
