@@ -133,12 +133,13 @@ jobs:
           # this is a read-only action, I think, so either token is ok
           github_token: ${{ secrets.GITHUB_TOKEN }}
       - name: Commit back
-        uses: actions-js/push@master
+        uses: actions-js/push@1.4
         with:
           # commit back with Github token to avoid retriggering actions
           github_token: ${{ secrets.GITHUB_TOKEN }}
           message: Release ${{ steps.versioning.outputs.version }}
           branch: main
+          tags: true
       - name: Create Github Release
         uses: ncipollo/release-action@v1.12.0
         if: steps['versioning']['outputs']['RETURN_STATUS'] == '0'
