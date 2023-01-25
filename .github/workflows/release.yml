@@ -134,6 +134,7 @@ jobs:
           DEFAULT_BUMP: minor
           RELEASE_BRANCHES: main
           INITIAL_VERSION: 0.0.0
+          DEFAULT_BRANCH: main
 #     - name: Auto Increment Semver Action
 #       uses: MCKanpolat/auto-semver-action@1.0.9
 #       id: versioning
