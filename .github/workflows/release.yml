@@ -140,7 +140,7 @@ jobs:
           message: Release ${{ steps.versioning.outputs.version }}
           branch: main
       - name: Create Github Release
-        uses: ncipollo/release-action@v1.10.0
+        uses: ncipollo/release-action@v1.12.0
         if: steps['versioning']['outputs']['RETURN_STATUS'] == '0'
         with:
           tag: ${{ steps.versioning.outputs.version }}
