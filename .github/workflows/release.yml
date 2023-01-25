@@ -126,7 +126,7 @@ jobs:
         with:
           fetch-depth: 0 # need all refs for tag generation
       - name: Auto Increment Semver Action
-        uses: MCKanpolat/auto-semver-action@1.0.7
+        uses: MCKanpolat/auto-semver-action@1.0.9
         id: versioning
         with:
           releaseType: patch
