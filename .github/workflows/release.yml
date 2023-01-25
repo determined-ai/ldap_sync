@@ -133,7 +133,7 @@ jobs:
           # this is a read-only action, I think, so either token is ok
           github_token: ${{ secrets.GITHUB_TOKEN }}
       - name: Commit back
-        uses: actions-js/push@1.4
+        uses: actions-js/push@v1.4
         with:
           # commit back with Github token to avoid retriggering actions
           github_token: ${{ secrets.GITHUB_TOKEN }}
