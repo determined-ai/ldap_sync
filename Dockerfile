@@ -1,7 +1,7 @@
 # syntax = docker/dockerfile:1.3
 # Use the official Python 3 image.
 # https://hub.docker.com/_/python
-FROM python:3.8.16-slim
+FROM python:3.11.1-slim
  
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get -y update \
