@@ -6,13 +6,19 @@ updates:
     directory: /
     schedule:
       interval: daily
+    commit-message:
+      prefix: "#patch"
 
   - package-ecosystem: pip
     directory: /
     schedule:
       interval: daily
+    commit-message:
+      prefix: "#minor"
 
   - package-ecosystem: docker
     directory: /
     schedule:
       interval: daily
+    commit-message:
+      prefix: "#minor"
