@@ -5,7 +5,7 @@ on:  # yamllint disable-line rule:truthy
   pull_request:
   push:
     branches:
-    - main
+      - main
 
 env:
   IMAGE_NAME: ${{ github.repository_owner }}/ldap_sync
@@ -35,12 +35,9 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           push: false
-          # note: because this image is exported, we can only build one platform here
+          # note: as this image is exported, we can only build one platform here
           platforms: linux/amd64
           tags: ${{ env.LC_IMAGE_NAME }}:${{ env.BUILD_TAG }}
-          #tags: ghcr.io/${{ env.LC_IMAGE_NAME }}:${{ env.BUILD_TAG }}
-          #cache-from: type=registry,ref=ghcr.io/${{ env.LC_IMAGE_NAME }}:latest
-          #cache-to: type=inline
           cache-from: type=gha
           cache-to: type=gha,mode=max
           outputs: type=docker,dest=${{ env.EXCHANGE_PATH }}/${{ env.EXCHANGE_FILE }}
@@ -71,8 +68,9 @@ jobs:
       - name: run test
         env:
           SOMEVAR: someval
-        run:
-          docker run --rm -i $LC_IMAGE_NAME:${{ needs.build.outputs.tag }} /bin/echo "yay"
+        run: |
+          docker run --rm -i $LC_IMAGE_NAME:${{ needs.build.outputs.tag }} \
+            /bin/echo "yay"
 
   # TODO: add an actual test of the script
   test_python_compile:
@@ -95,7 +93,8 @@ jobs:
           docker image ls -a
       - name: run test
         run:
-          docker run --rm $LC_IMAGE_NAME:${{ needs.build.outputs.tag }} python -m py_compile ldap_sync.py
+          docker run --rm $LC_IMAGE_NAME:${{ needs.build.outputs.tag }} \
+            python -m py_compile ldap_sync.py
 
   release:
     concurrency:  # only release one build at a time
@@ -105,7 +104,12 @@ jobs:
       - build
       - test_docker_run
       - test_python_compile
-    if: ${{ github.ref == 'refs/heads/main' && ( github.event_name == 'push' || github.event_name == 'workflow_dispatch' ) }}
+    if: >-
+      github.ref == 'refs/heads/main'
+      && ( github.event_name == 'push'
+           ||
+           github.event_name == 'workflow_dispatch'
+         )
     permissions:
       contents: write
       actions: read
@@ -124,7 +128,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3.3.0
         with:
-          fetch-depth: 0 # need all refs for tag generation
+          fetch-depth: 0  # need all refs for tag generation
       - name: Auto-increment version tag
         id: versionbump
         uses: anothrNick/github-tag-action@1.58.0
@@ -140,8 +144,7 @@ jobs:
         with:
           tag: ${{ steps.versionbump.outputs.new_tag }}
           name: ${{ steps.versionbump.outputs.new_tag }}
-          generateReleaseNotes: True
-          #body: Version ${{ steps.versioning.outputs.version }}
+          generateReleaseNotes: true
           draft: false
           prerelease: false
           # release with PAT to trigger actions on release
@@ -177,7 +180,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           push: true
-          #platforms: linux/amd64,linux/arm64,linux/arm/v6,linux/arm/v7
+          # platforms: linux/amd64,linux/arm64,linux/arm/v6,linux/arm/v7
           platforms: linux/amd64,linux/arm64
           tags: |
             ghcr.io/${{ env.LC_IMAGE_NAME }}:${{ needs.build.outputs.tag }}
@@ -187,4 +190,4 @@ jobs:
             ${{ env.DOCKERHUB_LC_IMAGE_NAME }}:${{ steps.versionbump.outputs.new_tag }}
             ${{ env.DOCKERHUB_LC_IMAGE_NAME }}:latest
           cache-from: type=registry,ref=ghcr.io/${{ env.LC_IMAGE_NAME }}:latest
-          #cache-to: type=inline
+          # cache-to: type=inline
