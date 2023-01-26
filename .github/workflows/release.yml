@@ -92,7 +92,7 @@ jobs:
           docker load --input ${{ env.EXCHANGE_PATH }}/${{ env.EXCHANGE_FILE }}
           docker image ls -a
       - name: run test
-        run:
+        run: |
           docker run --rm $LC_IMAGE_NAME:${{ needs.build.outputs.tag }} \
             python -m py_compile ldap_sync.py
 
