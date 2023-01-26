@@ -98,6 +98,8 @@ jobs:
           docker run --rm $LC_IMAGE_NAME:${{ needs.build.outputs.tag }} python -m py_compile ldap_sync.py
 
   release:
+    concurrency:
+      group: ${{ env.IMAGE_NAME }}
     runs-on: ubuntu-latest
     needs:
       - build
@@ -183,5 +185,5 @@ jobs:
             ${{ env.DOCKERHUB_LC_IMAGE_NAME }}:${{ needs.build.outputs.tag }}
             ${{ env.DOCKERHUB_LC_IMAGE_NAME }}:${{ steps.versionbump.outputs.new_tag }}
             ${{ env.DOCKERHUB_LC_IMAGE_NAME }}:latest
-          #cache-from: type=registry,ref=ghcr.io/${{ env.LC_IMAGE_NAME }}:${{ needs.build.outputs.tag }}
+          cache-from: type=registry,ref=ghcr.io/${{ env.LC_IMAGE_NAME }}:latest
           #cache-to: type=inline
