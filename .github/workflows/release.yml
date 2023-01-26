@@ -31,12 +31,6 @@ jobs:
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
-      #- name: Log in to GitHub Container Registry
-      #  uses: docker/login-action@v2.1.0
-      #  with:
-      #    registry: ghcr.io
-      #    username: ${{ github.repository_owner }}
-      #    password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build Docker image
         uses: docker/build-push-action@v3
         with:
@@ -139,24 +133,8 @@ jobs:
           RELEASE_BRANCHES: main
           INITIAL_VERSION: 0.0.0
           DEFAULT_BRANCH: main
-#     - name: Auto Increment Semver Action
-#       uses: MCKanpolat/auto-semver-action@1.0.9
-#       id: versioning
-#       with:
-#         releaseType: patch
-#         # this is a read-only action, I think, so either token is ok
-#         github_token: ${{ secrets.GITHUB_TOKEN }}
-#     - name: Commit back
-#       uses: actions-js/push@v1.4
-#       with:
-#         # commit back with Github token to avoid retriggering actions
-#         github_token: ${{ secrets.GITHUB_TOKEN }}
-#         message: Release ${{ steps.versioning.outputs.version }}
-#         branch: main
-#         tags: true
       - name: Create Github Release
         uses: ncipollo/release-action@v1.12.0
-        #if: steps['versioning']['outputs']['RETURN_STATUS'] == '0'
         with:
           tag: ${{ steps.versionbump.outputs.new_tag }}
           name: ${{ steps.versionbump.outputs.new_tag }}
