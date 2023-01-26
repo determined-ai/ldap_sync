@@ -98,7 +98,7 @@ jobs:
           docker run --rm $LC_IMAGE_NAME:${{ needs.build.outputs.tag }} python -m py_compile ldap_sync.py
 
   release:
-    concurrency:
+    concurrency:  # only release one build at a time
       group: ldap_sync
     runs-on: ubuntu-latest
     needs:
