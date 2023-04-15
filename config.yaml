@@ -1,7 +1,7 @@
 log:
   level: debug
 
-ldap_sync:
+ldap:
   
   sync_freq: 60  # seconds - if 0 runs once and exit
 
@@ -31,15 +31,16 @@ ldap_sync:
 
   user_plugin: user_plugin_template     # (optional) User operations exec before/after user is sent to SCIM or null
   
+user_management_api: det     # scim (include scim_api branch) | det (include det_api branch)
 
-scim_sync:
+scim_api:
   url: "http://localhost:8080/scim/v2"
 
   auth:
     type: basic
     username: "scim-user"
     password: "9rv9382mf9rcm2c940ic034"
-    #password: !ENV 'LDAP_SYNC_SCIM_PASSWORD' # '!ENV' is parameter retrieved from an environment variable (it can be used everywhere)
+    #password: !ENV 'LDAP_SYNC_SCIM_PASSWORD' # if '!ENV' is present the param is retrieved from the passed environment variable (it can be used everywhere)
 
   attr_mapping:
     #
@@ -61,3 +62,36 @@ scim_sync:
     whenChanged: ${whenChanged}
     memberOf: ${memberOf}                 # it could be a single group DN
                                           # or as in MS A/D a list of group DN
+det_api:
+  
+  url: "http://localhost:8080"
+
+  auth:
+    username: "admin"
+    password: ""
+    #password: !ENV 'LDAP_SYNC_DET_ADMIN_PASSWORD' # if '!ENV' is present the param is retrieved from the passed environment variable (it can be used everywhere)
+
+  attr_mapping:
+    #
+    # DET User fields requested by the MLDE DEt API and related LDAP field mapping. 
+    # The fileds adaptation and mapping is executed by the ldap_plugin.
+    # DET User fields can contain const (str|int|float|bool) or LDAP fields ${...}
+    #
+    # NOTE: DET User fields list cannot be extended, when valuse is "null" the field is not assigned
+    #
+    active: ${userAccountControl}       # user activation status
+    admin: false
+    agent_gid: null
+    agent_group: null
+    agent_uid: null
+    agent_user: null
+    display_name: ${cn}
+    user_id: null
+    username: ${userPrincipalName}
+    password: "password"                  # used when creating new users
+                                          # also valid values are: ${givenName}, ${mail}
+                                          # ATTENTION: User must change it at first login on MLDE platform.
+                                          #            Password it can be different from LDAP password, it is set by each user 
+    # other unused fields
+    # 
+    # memberOf: ${memberOf} 

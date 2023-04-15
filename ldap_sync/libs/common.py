@@ -23,20 +23,32 @@ PLUGIN_LIB = "plugins"
 # these vars are global to permit to every module and plugin to access it
 
 logger = logging.getLogger(LOGGER_NAME)
+
+# configuration
 config = {}
-ldap_config = {}
-scim_config = {}
+user_management_api = 'scim'   # scim|det platform api used to manage users
+ldap_config = {}        # ldap branch
+ldap_config_auth = {}   # ldap auth branch
+ldap_config_users = {}  # ldap users branch
+scim_config = {}        # scim_api branch SCIM APIs when user_management_api = 'scim'
+det_config = {}         # det_api branch Determined APIs when user_management_api = 'det'
+
+# plug in
 ldap_plugin = None      # plugin vendor-dependent for LDAP entries processing and maping onto SCIM users
 user_plugin = None      # (optional) plugin to exectute operations before and after users update on the plaform 
 curr_dir = ""           # main file current directory
-# users
+
+# user list
 ldap_users = []         # raw users data retrieved from LDAP
-scim_users = []         # LDAP users converted to SCIM struct to update the platform
-curr_scim_users = []    # current SCIM users list on the platform
-scim_users_ops = {  'add': [],
+local_users = []        # user list coming from LDAP to be sent to the Determined platform. It contains users converted from LDAP to SCIM struct; 
+                        # and it is also used by the Determined APIs functionality
+curr_local_users = []   # user list coming from the Determined platform, by SCIM or by DET APIs
+
+# SCIM user list with operations to be executed on the SCIM API or Determined API interfaces
+local_users_ops = { 'add': [],
                     'update': [],
                     'delete': []
-} # SCIM users operations to be executed on the SCIM API
+} 
 
 # common general purpose functions 
 
@@ -102,19 +114,22 @@ class ObjectGUID:
         return str(self._guid)
 
 # common initialization
-def init(config_file_path=None):
+def init(config_file_path=None, version=''):
     """ common module init 
         
         ATTENTION: THIS init() IS TO BE CALLED ONLY IN THE MAIN FUNCTION
 
         Args:
-            config_file_path: (optional str) full pathn of the config file, if not provided config file path: current dir + '/' + CONFIG_FILE 
+            config_file_path: (optional str) full pathn of the config file, 
+            if not provided config file path: current dir + '/' + CONFIG_FILE 
 
         Raises:
             signal and file exceptions to be managed
     """
     
-    global logger, config, ldap_plugin, user_plugin, curr_dir, ldap_config, scim_config
+    global logger, config, ldap_plugin, user_plugin, curr_dir, \
+           ldap_config, ldap_config_auth, ldap_config_users, \
+           scim_config, det_config, user_management_api
 
     # set current dir
     curr_dir = os.path.dirname(os.path.abspath(__file__))
@@ -139,6 +154,8 @@ def init(config_file_path=None):
     # assign signal handlers
     signal.signal(signal.SIGTERM, _sigterm)  
     signal.signal(signal.SIGINT, _sigint)
+
+    logger.info(f"HPE MLDE - LDAP Sync ver. {version} (c) 2023 Hewlett Packard Enterprise, All rights reserved.")
 
     if config_file_path is not None and isinstance(config_file_path, str) and len(config_file_path) > 0:
         if os.path.isabs(config_file_path):
@@ -194,17 +211,47 @@ def init(config_file_path=None):
     
     logger.debug("Configuration: %s" % config)
 
-    # checks if main config keys exist
-    if 'ldap_sync' in config:
-        ldap_config = config['ldap_sync']
+    # get main configuration branches
+
+    if 'ldap' in config:
+        ldap_config = config['ldap']
+
+        if 'auth' in ldap_config and 'users' in ldap_config:
+            ldap_config_auth  = ldap_config['auth']
+            ldap_config_users = ldap_config['users']
+        else:
+            logger.error("Config does not contain [ldap.auth or ldap.users] key - exit")
+            sys.exit(1) # General error
     else:
-        logger.error("Config does not contain [ldap_sync] key - exit")
+        logger.error("Config does not contain [ldap] key - exit")
         sys.exit(1) # General error
 
-    if 'scim_sync' in config:
-        scim_config = config['scim_sync']
+    if 'user_management_api' in config:
+        api_type = config['user_management_api']
+        
+        if api_type.lower() == 'scim':
+            user_management_api = 'scim'
+            logger.error("SCIM user management API enabled")
+
+            if 'scim_api' in config:
+                scim_config = config['scim_api']
+            else:
+                logger.error("Config does not contain [scim_api] key - exit")
+                sys.exit(1) # General error
+        elif api_type.lower() == 'det':
+            user_management_api = 'det'
+            logger.error("Determined user management API enabled")
+
+            if 'det_api' in config:
+                det_config = config['det_api']
+            else:
+                logger.error("Config does not contain [det_api] key - exit")
+                sys.exit(1) # General error
+        else:
+            logger.error(f"Unhandled API type [{api_type}] - exit")
+            sys.exit(1) # General error
     else:
-        logger.error("Config does not contain [scim_sync] key - exit")
+        logger.error("Config does not contain [users_management_api] key - exit")
         sys.exit(1) # General error
 
     # plugins loader

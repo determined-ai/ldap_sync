@@ -3,12 +3,13 @@
 #
 
 import sys
-import logging
 import time
 import argparse
 
 from libs import common as c
 from libs import sync_process as sp
+
+VERSION = '1.1'
 
 # define main 
 def main():
@@ -23,7 +24,7 @@ def main():
         args = parser.parse_args()
 
         # initialize the common variables and perform the start-up checks (if negative exit)
-        c.init(args.config_file_path)  
+        c.init(args.config_file_path, VERSION)  
 
         # LDAP query loop 
         while True:

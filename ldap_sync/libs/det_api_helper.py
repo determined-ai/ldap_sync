@@ -1,12 +1,211 @@
 #
-# SCIM helper module
+# DET API helper module
+# Determined API wrapper (user management)
 #
 
 import requests
 import json
 
 from libs import common as c
-from libs import scim 
+
+det_auth_resp = {}
+
+def api_call(api, method='GET', payload={}, bearer=None):
+
+    if 'url' in c.det_config:
+        url = c.det_config['url']
+    else:
+        c.logger.error("No Det APIs endpoint URL provided")
+        return None
+
+    if bearer is None:
+        headers = {
+            'Content-Type': 'application/json'
+        }
+    else:
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer '+bearer
+        }
+        
+    try:
+        if method.upper() == 'GET':
+            #in api if GET also set eventual parameters
+            resp = requests.get(url+api , 
+                                 headers=headers)
+
+        elif method.upper() == 'POST':
+            resp = requests.post(url+api , 
+                                    headers=headers,
+                                    json=payload)
+        else:
+            # TODO implement other methods
+            resp = requests.post(url+api , 
+                                    headers=headers,
+                                    json=payload)
+            
+    except requests.exceptions.Timeout:
+        # Maybe set up for a retry, or continue in a retry loop
+        c.logger.error("Error contacting Det APIs - error: Timeout")
+        return {'http_status': None, 'response': {}} 
+    except requests.exceptions.TooManyRedirects:
+            # Tell the user their URL was bad and try a different one
+        c.logger.error("Error contacting Det APIs - error: Too Many Redirects")
+        return {'http_status': None, 'response': {}} 
+    except requests.exceptions.RequestException as e:
+        c.logger.error("Error contacting Det APIs - error: %s", e)
+        return {'http_status': None, 'response': {}} 
+
+
+    # Manage REST response
+    if resp.status_code in [200,201,202]:   # http ok, created, accepted
+        content = json.loads(resp.text)
+        c.logger.debug("HTTP status: %d" % resp.status_code)
+        return {'http_status': resp.status_code, 'response': content}
+        
+    else:
+        c.curr_local_users = [] # reset
+        c.logger.error("HTTP error - status: %d" % resp.status_code)
+        return {'http_status': resp.status_code, 'response': {}}
+
+
+
+
+
+def det_login():
+    global det_auth_resp
+
+    if 'auth' in c.det_config  \
+        and 'username' in c.det_config['auth'] \
+        and 'password' in c.det_config['auth']:
+
+        payload = {
+            "username": c.det_config['auth']['username'],
+            "password": c.det_config['auth']['password'],
+            "isHashed": True
+        }
+
+        res = api_call('/api/v1/auth/login', 'POST', payload)
+        
+        if res['http_status'] == 200 and 'token' in res['response']:
+            c.logger.debug("Det API login executed")
+            det_auth_resp = res['response']
+        else:
+            det_auth_resp ={} # reset
+
+        return res
+
+    else:
+        c.logger.error('Det APIs mandatory connection info are omitted')
+        return None
+
+def det_logout():
+    global det_auth_resp
+
+    if 'token' in det_auth_resp:
+        token = det_auth_resp['token']
+
+        res = api_call('/api/v1/auth/logout', 'POST', bearer=token)
+        
+        if res['http_status'] == 200:
+            det_auth_resp = {}
+        else:
+            det_auth_resp = {}    #reset
+
+        return res
+    else:
+        c.logger.error('Det APIs token must be provided')
+        return {}
+
+def det_get_users():
+    if 'token' in det_auth_resp:
+        token = det_auth_resp['token']
+
+        res = api_call('/api/v1/users?sortBy=SORT_BY_ACTIVE&orderBy=ORDER_BY_DESC&offset=0&limit=0', 'GET', bearer=token)
+
+        return res
+    else:
+        c.logger.error('Det APIs token must be provided')
+        return {}
+
+def det_add_user():
+    ...
+
+def det_update_user():
+    ...
+
+def det_set_user_admin_rights():
+    ...
+
+def det_remove_user_admin_rights():
+    ...
+
+def det_get_groups_search(user_id):
+    if 'token' in det_auth_resp:
+        token = det_auth_resp['token']
+
+
+        payload = {}
+        # payload = {
+        #     "userId": user_id,
+        #     #"name": None,
+        #     "offset": 0,
+        #     "limit": 0
+        # }
+
+        res = api_call('/api/v1/groups/search', 'POST', payload=payload,  bearer=token)
+
+        return res
+    else:
+        c.logger.error('Det APIs token must be provided')
+        return {}
+
+
+def det_get_groups():
+    if 'token' in det_auth_resp:
+        token = det_auth_resp['token']
+
+        payload = {}
+
+        res = api_call('/api/v1/groups', 'POST', payload=payload,  bearer=token)
+
+        return res
+    else:
+        c.logger.error('Det APIs token must be provided')
+        return {}
+
+def det_add_user_to_group():
+    ...
+
+def det_remove_user_from_group():
+    ...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 def _get_scim_access_param():
     """ (private) Genereate the SCIM API access parameters starting from configuration
