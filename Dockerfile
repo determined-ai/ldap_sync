@@ -2,7 +2,7 @@
 # Use the official Python 3 image.
 # https://hub.docker.com/_/python
 #FROM python:3.8.16-slim
-FROM python:3.11.3-slim
+FROM python:3.11.4-slim
 
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get -y update \
