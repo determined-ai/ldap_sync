@@ -9,7 +9,8 @@ RUN apt-get -y update \
  && apt-get -y install \
       libsasl2-dev \
       build-essential \
-      python-dev \
+      python3-dev \
+      python-dev-is-python3 \
       libldap2-dev \
       libssl-dev \
  && apt-get -y clean
