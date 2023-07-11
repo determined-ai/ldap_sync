@@ -9,7 +9,7 @@ import argparse
 from libs import common as c
 from libs import sync_process as sp
 
-VERSION = '0.25.0'
+VERSION = '0.25.0' 
 
 # define main 
 def main():
