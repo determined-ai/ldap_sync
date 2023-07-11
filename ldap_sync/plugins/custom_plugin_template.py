@@ -1,10 +1,10 @@
 #
-# User plugin template 
+# Customization plugin template 
 #
 
 # ref global logger and config
 from libs import common as c
-from libs import user_plugin_common as upc
+from libs import custom_plugin_common as cpc
 
 def init(*args, **kwargs):
     c.logger.debug("%s %s" % (args, kwargs))

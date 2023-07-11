@@ -4,6 +4,7 @@
 #
 # ref :https://learn.microsoft.com/en-us/troubleshoot/windows-server/identity/useraccountcontrol-manipulate-account-properties
 
+import sys
 import codecs
 
 from libs import ldap_helper as lh
@@ -25,20 +26,17 @@ def ldap_get_users():
         To be used in case the standard parameters or the access method does not fit the need.
     """
 
-    auth_config  = c.config['ldap_sync']['auth']
-    users_config = c.config['ldap_sync']['users']
-
     # get LDAP users
 
     c.ldap_users = [] # reset
 
-    resp_ok = lh.ldap_retrieve_users(   auth_config['url'],
-                                        auth_config['user'],
-                                        auth_config['password'],
-                                        users_config['dn'],
-                                        users_config['attr'],
-                                        users_config['filter'],
-                                        auth_config['tls'], 
+    resp_ok = lh.ldap_retrieve_users(   c.ldap_config_auth['url'],
+                                        c.ldap_config_auth['user'],
+                                        c.ldap_config_auth['password'],
+                                        c.ldap_config_users['dn'],
+                                        c.ldap_config_users['attr'],
+                                        c.ldap_config_users['filter'],
+                                        c.ldap_config_auth['tls'], 
                                         handle_entry = c.ldap_plugin.ldap_user_handler
                                         )
     
@@ -72,14 +70,14 @@ def ldap_to_scim_mapping():
     """
     c.logger.debug("Mapping - LDAP Users count: %d" % len(c.ldap_users))
     
-    c.scim_users = [] # reset
+    c.local_users = [] # reset
 
     for ldap_user in c.ldap_users:
         c.logger.debug("Mapping - LDAP User info: %s" % ldap_user)
 
         scim_user = {}
         
-        for k,v in c.config['scim_sync']['attr_mapping'].items():
+        for k,v in c.scim_config['attr_mapping'].items():
             # k = SCIM side, v = LDAP field or const
 
             if k == 'active' and v.lower() == '${useraccountcontrol}':
@@ -101,6 +99,23 @@ def ldap_to_scim_mapping():
                 scim_user = lpc.scim_common_mapping(k, v, scim_user, ldap_user)
 
         c.logger.debug("Mapping - SCIM User info: %s" % scim_user)
-        c.scim_users.append(scim_user)
+        c.local_users.append(scim_user)
     
-    c.logger.debug("Mapping - SCIM Users count: %d" % len(c.scim_users))
+    c.logger.debug("Mapping - SCIM Users count: %d" % len(c.local_users))
+
+
+def ldap_to_det_mapping():
+    """ MS A/D LDAP to Determined APIs mapping function.
+        Create the Determined APIs users list mapping the existing LDAP users
+
+        VERIFY THESE BELOW !!!! 
+                    MS A/D Specific LDAP fields management:
+                        - MS A/D LDAP: userAccount control -> SCIM: active
+                        - MS A/D LDAP: memberOf -> SCIM memberOf
+
+                    Common SCIM LDAP fields management:
+                        - MS A/D LDAP: objectGUID, UUID -> SCIM: externalId (readable str conversion)
+                        - MS A/D LDAP: mail -> SCIM: emails = [{value: <email addr>, type: 'work', primary: True}] = emails.work.value
+                        - MS A/D LDAP: first/last name (givenName/sn) -> SCIM: name: name = { givenName: <value>, familyName: <value> }
+    """
+    ...

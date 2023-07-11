@@ -1,6 +1,5 @@
 #
 # SCIM helper module
-# This plugin manages the MLDE mapping and MS A/D specificities 
 #
 
 import requests
@@ -101,7 +100,7 @@ def get_scim_users():
     scim_user_obj = scim.User()
     access['url'] = access['url'] + scim_user_obj.URI 
 
-    c.curr_scim_users = [] # reset
+    c.curr_local_users = [] # reset
 
     # REST API Calls
 
@@ -134,14 +133,14 @@ def get_scim_users():
         curr_scim_user_list = json.loads(resp.text)
 
         if 'Resources' in curr_scim_user_list:
-            c.curr_scim_users = curr_scim_user_list['Resources']
+            c.curr_local_users = curr_scim_user_list['Resources']
 
         c.logger.debug("HTTP status: %d" % resp.status_code)
-        c.logger.debug("Returned SCIM Users count: %d" % len(c.curr_scim_users))
+        c.logger.debug("Returned SCIM Users count: %d" % len(c.curr_local_users))
         return {'http_status': resp.status_code, 'scim_user_list': curr_scim_user_list}
         
     else:
-        c.curr_scim_users = [] # reset
+        c.curr_local_users = [] # reset
         c.logger.error("HTTP error - status: %d" % resp.status_code)
         return {'http_status': resp.status_code, 'scim_user_list': {}}
 
