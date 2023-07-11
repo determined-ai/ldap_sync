@@ -1,0 +1,87 @@
+
+export DET_MASTER=http://localhost:8080
+
+# -------------------------------------------------
+# Get token
+
+TOKEN=`curl -X POST -s -d '{"username": "admin", "password": "Admin123"}' "${DET_MASTER}/api/v1/auth/login" | jq -r .token`
+echo $TOKEN
+
+# -------------------------------------------------
+# list groups
+
+curl -X POST -s -H 'accept: application/json' -H "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/json" -d '{"limit": -1}' "${DET_MASTER}/api/v1/groups/search" 
+
+RESP OK:
+{"groups":[
+        {"group":{"groupId":9,"name":"DetGroup"},"numMembers":1}
+    ],
+    "pagination":{"offset":0,"limit":-1,"startIndex":0,"endIndex":1,"total":1}
+}
+
+RESP OK NO GROUPS:
+{"groups":[],
+    "pagination":{"offset":0,"limit":-1,"startIndex":0,"endIndex":0,"total":0}
+}
+
+# -------------------------------------------------
+# get groupId = 9
+
+curl -X GET -s -H 'accept: application/json' -H "Authorization: Bearer ${TOKEN}" "${DET_MASTER}/api/v1/groups/9?orderBy=ORDER_BY_DESC&limit=-1" 
+
+RESP OK:
+{"group": {
+    "groupId":9,
+    "name":"DetGroup",
+    "users":[
+        {"id":2,"username":"determined","admin":false,"active":true,"agentUserGroup":null,"displayName":"","modifiedAt":"2023-06-19T14:56:28.136531Z","remote":false}
+        ]
+    }
+}
+
+RESP ERR:
+{"error":{"code":5,"reason":"NotFound","error":"Error getting group 120: not found"}}
+
+# -------------------------------------------------
+# add/remove-add_users to/from group
+
+# user list 
+curl -X GET -H 'accept: application/json' -H "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/json" "${DET_MASTER}/api/v1/users"
+
+# get user ids to add/remove
+# get group id
+
+# add 
+curl -X POST -s -H 'accept: application/json' -H "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/json" -d '{"addUsers": [3], "removeUsers": []}' -X PUT "${DET_MASTER}/api/v1/groups/9" 
+
+# remove
+curl -X POST -s -H 'accept: application/json' -H "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/json" -d '{"addUsers": [], "removeUsers": [3]}' -X PUT "${DET_MASTER}/api/v1/groups/9"
+
+{ "groupId":9, "name":"DetGroup", "addUsers": [], "removeUsers": []}
+
+PUT
+{JSON} =
+{
+  "groupId": 0,       opt
+  "name": "string",   opt
+  "addUsers": [       opt
+    0  ... user ids
+  ],
+  "removeUsers": [    opt
+    0 ... user ids
+  ]
+}
+
+RESP OK (changed group):
+{ "group": {
+  "groupId":9,
+  "name":"DetGroup",
+  "users":[
+    {"id":2,"username":"determined","admin":false,"active":true,"agentUserGroup":null,"displayName":"","modifiedAt":"2023-06-19T14:56:28.136531Z","remote":false},
+    {"id":3,"username":"daniele.cellai@ds.det-dcellai-win-ldap-srv.c.determined-ai.internal","admin":false,"active":true,"agentUserGroup":null,"displayName":"","modifiedAt":"2023-06-19T15:20:22.818882Z","remote":true}
+    ]
+  }
+}
+
+RESP OK Already exists:
+{"error":{"code":6,"reason":"AlreadyExists","error":"Error when adding 1 user(s) to group 9: row already exists"}}

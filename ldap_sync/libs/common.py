@@ -19,24 +19,35 @@ LOGGER_NAME = 'ldap_sync'
 CONFIG_FILE = "config.yaml"  # path relative to the main file
 PLUGIN_LIB = "plugins"
 
-# common global vars definintion
+# common global vars definition
 # these vars are global to permit to every module and plugin to access it
 
 logger = logging.getLogger(LOGGER_NAME)
+
+# configuration
 config = {}
-ldap_config = {}
-scim_config = {}
-ldap_plugin = None      # plugin vendor-dependent for LDAP entries processing and maping onto SCIM users
-user_plugin = None      # (optional) plugin to exectute operations before and after users update on the plaform 
+ldap_config = {}        # ldap branch
+ldap_config_auth = {}   # ldap auth branch
+ldap_config_users = {}  # ldap users branch
+scim_config = {}        # scim_api branch SCIM APIs
+det_config = {}         # det_api branch Determined APIs
+
+# plug in
+ldap_plugin = None      # plugin vendor-dependent for LDAP entries processing and mapping onto SCIM users
+custom_plugin = None    # (optional) plugin to execute operations before and after users update on the Determined platform 
 curr_dir = ""           # main file current directory
-# users
+
+# user list
 ldap_users = []         # raw users data retrieved from LDAP
-scim_users = []         # LDAP users converted to SCIM struct to update the platform
-curr_scim_users = []    # current SCIM users list on the platform
-scim_users_ops = {  'add': [],
+local_users = []        # user list coming from LDAP to be sent to the Determined platform. It contains users mapped/converted from LDAP to SCIM struct, 
+                        # and it is also used by the Determined APIs functionality
+curr_local_users = []   # user list coming from the Determined platform, by SCIM
+
+# SCIM user list with operations to be executed on the SCIM API interface
+local_users_ops = { 'add': [],
                     'update': [],
                     'delete': []
-} # SCIM users operations to be executed on the SCIM API
+} 
 
 # common general purpose functions 
 
@@ -69,7 +80,7 @@ def stop_time(start, to_str=False):
     else:
         return ts
 
-# define signal handelers
+# define signal handlers
 
 def _sigterm(signal, frame):
     """ Standard signal SIGTERM handler (private)
@@ -102,19 +113,22 @@ class ObjectGUID:
         return str(self._guid)
 
 # common initialization
-def init(config_file_path=None):
+def init(config_file_path=None, version=''):
     """ common module init 
         
         ATTENTION: THIS init() IS TO BE CALLED ONLY IN THE MAIN FUNCTION
 
         Args:
-            config_file_path: (optional str) full pathn of the config file, if not provided config file path: current dir + '/' + CONFIG_FILE 
+            config_file_path: (optional str) full pathname of the config file, 
+            if not provided config file path: current dir + '/' + CONFIG_FILE 
 
         Raises:
             signal and file exceptions to be managed
     """
     
-    global logger, config, ldap_plugin, user_plugin, curr_dir, ldap_config, scim_config
+    global logger, config, ldap_plugin, custom_plugin, curr_dir, \
+           ldap_config, ldap_config_auth, ldap_config_users, \
+           scim_config, det_config
 
     # set current dir
     curr_dir = os.path.dirname(os.path.abspath(__file__))
@@ -139,6 +153,8 @@ def init(config_file_path=None):
     # assign signal handlers
     signal.signal(signal.SIGTERM, _sigterm)  
     signal.signal(signal.SIGINT, _sigint)
+
+    logger.info(f"HPE MLDE - LDAP Sync ver. {version} (c) 2023 Hewlett Packard Enterprise, All rights reserved.")
 
     if config_file_path is not None and isinstance(config_file_path, str) and len(config_file_path) > 0:
         if os.path.isabs(config_file_path):
@@ -194,17 +210,31 @@ def init(config_file_path=None):
     
     logger.debug("Configuration: %s" % config)
 
-    # checks if main config keys exist
-    if 'ldap_sync' in config:
-        ldap_config = config['ldap_sync']
+    # get main configuration branches
+
+    if 'ldap' in config:
+        ldap_config = config['ldap']
+
+        if 'auth' in ldap_config and 'users' in ldap_config:
+            ldap_config_auth  = ldap_config['auth']
+            ldap_config_users = ldap_config['users']
+        else:
+            logger.error("Config does not contain [ldap.auth or ldap.users] key - exit")
+            sys.exit(1) # General error
     else:
-        logger.error("Config does not contain [ldap_sync] key - exit")
+        logger.error("Config does not contain [ldap] key - exit")
         sys.exit(1) # General error
 
-    if 'scim_sync' in config:
-        scim_config = config['scim_sync']
+    if 'scim_api' in config:
+        scim_config = config['scim_api']
     else:
-        logger.error("Config does not contain [scim_sync] key - exit")
+        logger.error("Config does not contain [scim_api] key - exit")
+        sys.exit(1) # General error
+
+    if 'det_api' in config:
+        det_config = config['det_api']
+    else:
+        logger.error("Config does not contain [det_api] key - exit")
         sys.exit(1) # General error
 
     # plugins loader
@@ -219,15 +249,15 @@ def init(config_file_path=None):
         logger.error("LDAP plugin (ldap_plugin key) not defined in configuration - exit")
         sys.exit(1) # General error
 
-    if 'user_plugin' in ldap_config:
-        if ldap_config['user_plugin'] is None:
-            logger.info("User plugin disabled")
+    if 'custom_plugin' in config:
+        if config['custom_plugin'] is None:
+            logger.info("Customization plugin disabled")
         else:
-            logger.info("User plugin [%s] enabled" % ldap_config['user_plugin'])
-            user_plugin = plg.load(ldap_config['user_plugin'], init=True)
+            logger.info("Customization plugin [%s] enabled" % config['custom_plugin'])
+            custom_plugin = plg.load(config['custom_plugin'], init=True)
 
-            if user_plugin is None:
-                logger.error("Cannot load defined User plugin - exit") # User plugin, if defined, must be ready
+            if custom_plugin is None:
+                logger.error("Cannot load defined customization plugin - exit") # User plugin, if defined, must be ready
                 sys.exit(1) # General error
     else:
         logger.info("User plugin disabled")
