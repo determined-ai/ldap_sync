@@ -1,5 +1,5 @@
 #
-# SCIM helper testing
+# DET APIs helper testing
 #
 import argparse
 
@@ -17,8 +17,19 @@ def main_test():
     # initialize the common variables and perform the start-up checks (if negative exit)
     c.init(args.config_file_path, VERSION)  
 
+    # regex to extract the group name from the LDAP group
+    import re
+    group = 'CN=DetGroup,CN=Users,DC=ds,DC=det-dcellai-win-ldap-srv,DC=c,DC=determined-ai,DC=internal'
+    group_search = '^CN=(.+?)\,'
+    m = re.search(group_search, group)
+    if m:
+        found = m.group(1)
+        print(f"found: {found}")
+
+
+
     ###########################################
-    # Test SCIM helper
+    # Test DET APIs helper
 
     c.logger.info(80*"=")
     c.logger.info("DET API helper unit test - start")

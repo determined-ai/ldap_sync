@@ -9,11 +9,11 @@ import argparse
 from libs import common as c
 from libs import sync_process as sp
 
-VERSION = '1.1'
+VERSION = '1.2'
 
 # define main 
 def main():
-    """ Main - Get config, initalize logger, signals hd, and plugins, then pass control to the loop.
+    """ Main - Get config, initialize logger, signals hd, and plugins, then pass control to the loop.
         If sync_freq = 0 execute one-shot and exit.
     """
     try:
