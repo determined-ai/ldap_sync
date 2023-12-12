@@ -46,6 +46,7 @@ jobs:
         with:
           name: ${{ env.EXCHANGE_FILE }}
           path: ${{ env.EXCHANGE_PATH }}/${{ env.EXCHANGE_FILE }}
+          retention-days: 1
 
   test_docker_run:
     runs-on: ubuntu-latest
@@ -191,3 +192,17 @@ jobs:
             ${{ env.DOCKERHUB_LC_IMAGE_NAME }}:latest
           cache-from: type=registry,ref=ghcr.io/${{ env.LC_IMAGE_NAME }}:latest
           # cache-to: type=inline
+
+  cleanup:
+    runs-on: ubuntu-latest
+    needs:
+      - build
+      - release
+    if: always()
+    permissions:
+      actions: write
+    steps:
+      - name: clean up ${{ env.EXCHANGE_FILE }} artifact
+        uses: joutvhu/delete-artifact@v1.0.2
+        with:
+          name: ${{ env.EXCHANGE_FILE }}
