@@ -203,6 +203,6 @@ jobs:
       actions: write
     steps:
       - name: clean up ${{ env.EXCHANGE_FILE }} artifact
-        uses: joutvhu/delete-artifact@v1.0.2
+        uses: joutvhu/delete-artifact@v1.0.3
         with:
           name: ${{ env.EXCHANGE_FILE }}
