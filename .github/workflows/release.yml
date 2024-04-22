@@ -127,7 +127,7 @@ jobs:
 
       # create the release
       - name: Checkout
-        uses: actions/checkout@v4.1.2
+        uses: actions/checkout@v4.1.3
         with:
           fetch-depth: 0  # need all refs for tag generation
       - name: Auto-increment version tag
