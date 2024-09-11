@@ -5,5 +5,5 @@ urllib3==2.2.2
 certifi==2024.8.30
 charset-normalizer==3.3.2
 idna==3.8
-pyasn1==0.6.0
+pyasn1==0.6.1
 pyasn1-modules==0.4.0
