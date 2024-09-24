@@ -132,7 +132,7 @@ jobs:
           fetch-depth: 0  # need all refs for tag generation
       - name: Auto-increment version tag
         id: versionbump
-        uses: anothrNick/github-tag-action@1.70.0
+        uses: anothrNick/github-tag-action@1.71.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           WITH_V: false
