@@ -141,7 +141,7 @@ jobs:
           INITIAL_VERSION: 0.0.0
           DEFAULT_BRANCH: main
       - name: Create Github Release
-        uses: ncipollo/release-action@v1.16.0
+        uses: ncipollo/release-action@v1.18.0
         with:
           tag: ${{ steps.versionbump.outputs.new_tag }}
           name: ${{ steps.versionbump.outputs.new_tag }}
