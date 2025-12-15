@@ -58,7 +58,7 @@ jobs:
         run: |
           echo "LC_IMAGE_NAME=${IMAGE_NAME,,}" >> "$GITHUB_ENV"
       - name: Download artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: ${{ env.EXCHANGE_FILE }}
           path: ${{ env.EXCHANGE_PATH }}
@@ -84,7 +84,7 @@ jobs:
         run: |
           echo "LC_IMAGE_NAME=${IMAGE_NAME,,}" >> "$GITHUB_ENV"
       - name: Download artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: ${{ env.EXCHANGE_FILE }}
           path: ${{ env.EXCHANGE_PATH }}
@@ -169,7 +169,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PUBLISH_TOKEN }}
       - name: Download artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: ${{ env.EXCHANGE_FILE }}
           path: ${{ env.EXCHANGE_PATH }}
