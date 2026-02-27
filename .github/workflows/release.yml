@@ -42,7 +42,7 @@ jobs:
           cache-to: type=gha,mode=max
           outputs: type=docker,dest=${{ env.EXCHANGE_PATH }}/${{ env.EXCHANGE_FILE }}
       - name: Upload artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ env.EXCHANGE_FILE }}
           path: ${{ env.EXCHANGE_PATH }}/${{ env.EXCHANGE_FILE }}
