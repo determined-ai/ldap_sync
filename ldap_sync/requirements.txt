@@ -2,7 +2,7 @@ PyYAML==6.0.3
 requests==2.34.2
 python-ldap==3.4.8
 urllib3==2.8.0
-certifi==2026.10.19
+certifi==2026.10.23
 charset-normalizer==3.5.2
 idna==3.20
 pyasn1==0.6.4
